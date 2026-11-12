@@ -192,7 +192,10 @@ so only an `auto/…` record reads the providers), and
 `usageapi.LedgerPage` displays the public spelling for both `model` and `req`.
 This does not apply user usage aliases to Requests. A clear made under either
 group id covers both spellings. Model lists continue to use the catalog ids.
-Verification: `TestUsageAliasCountsTwoIdsAsOne`,
+Both alias caches own the model ids they keep: usage filters lend strings
+from a decoded chunk whose buffer the next chunk reuses. Unmapped results
+must stay owned too. Verification: `TestUsageAliasKeepsBorrowedModels`,
+`TestClearedUsageWithBorrowedModels`, `TestUsageAliasCountsTwoIdsAsOne`,
 `TestSessionsCountAliasedModelsAsOne`, `TestAliasStatsLeavesItsInputAlone`,
 `TestSessionsFoundGroupNames`, `TestSessionsAPIFoundGroupNames`,
 `TestUsageFoundGroupNames`, `TestCodexEffortFoundGroupNames`,

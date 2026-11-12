@@ -190,6 +190,8 @@ func usageAliasFrom(aliases, groups map[string]string) func(string) string {
 		if v, ok := memo.Load(model); ok {
 			return v.(string)
 		}
+		// A usage row can lend its model from a reused decode buffer.
+		model = strings.Clone(model)
 		out := publicRef(model, func(gid string) string { return groups[gid] })
 		if alias != nil {
 			out = alias(out)
@@ -267,6 +269,8 @@ func usageAliasOf(m map[string]string) func(string) string {
 		if v, ok := memo.Load(model); ok {
 			return v.(string)
 		}
+		// Own both the key and an unchanged result past the row's visit.
+		model = strings.Clone(model)
 		out := model
 		if name := resolved[sameModel(model)]; name != "" {
 			out = name
