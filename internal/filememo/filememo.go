@@ -187,7 +187,7 @@ func read[T any](kind, path string, parse func([]byte) (T, error), held bool) (T
 	e, ok := seen[key]
 	if ok && held && holds > 0 && e.raw == nil && e.gen == gen && time.Since(e.checked) < heldFor {
 		mu.Unlock()
-		return e.v.(T), nil
+		return value[T](e), nil
 	}
 	if m, ok := missing[path]; ok && held && holds > 0 && m.gen == gen && time.Since(m.checked) < heldFor {
 		mu.Unlock()
@@ -213,7 +213,7 @@ func read[T any](kind, path string, parse func([]byte) (T, error), held bool) (T
 			seen[key] = e
 		}
 		mu.Unlock()
-		return e.v.(T), nil
+		return value[T](e), nil
 	}
 	if ok && e.raw != nil && e.mod.Equal(fi.ModTime()) && e.size == fi.Size() {
 		// written just now and the same size and time: most often the
@@ -241,7 +241,7 @@ func read[T any](kind, path string, parse func([]byte) (T, error), held bool) (T
 			}
 			mu.Unlock()
 			settle(key, e)
-			return e.v.(T), nil
+			return value[T](e), nil
 		}
 		// the buffer was this read's alone: it is what was parsed now
 		return parsed(key, fi, b, parse, g)
@@ -252,9 +252,19 @@ func read[T any](kind, path string, parse func([]byte) (T, error), held bool) (T
 	}
 	if ok && e.mod.Equal(fi.ModTime()) && bytes.Equal(b, e.raw) {
 		settle(key, e)
-		return e.v.(T), nil
+		return value[T](e), nil
 	}
 	return parsed(key, fi, b, parse, g)
+}
+
+// value keeps a successful nil parse nil: an interface with no value
+// cannot be type-asserted, even when T is any (#6197).
+func value[T any](e entry) T {
+	if e.v == nil {
+		var zero T
+		return zero
+	}
+	return e.v.(T)
 }
 
 // settle drops e's bytes once its file's time is old enough to tell a
